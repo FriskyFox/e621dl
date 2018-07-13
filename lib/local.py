@@ -15,38 +15,50 @@ def make_config(name='config.ini'):
             raise SystemExit
 
 def migrate_config():
-    configOld = configparser.ConfigParser()
-    configNew = configparser.ConfigParser()
-    with open('config.ini', 'rt', encoding = 'utf_8_sig') as oldFile:
-        configOld.read_file(oldFile)
-    make_config('configMigration.ini')
-    with open('configMigration.ini', 'wt', encoding = 'utf_8_sig') as newFile:
-        configNew.read_file(newFile)
 
-    #Simple accessor and mutator methods
-    for section in config.sections():
-        if section.lower() == 'other':
-            for option, value in config.items(section):
-                if option.lower() == 'include_md5':
-                        configNew['Other']['include_md5'] = value
-                elif option.lower() == 'organize_by_type':
-                        configNew['Other']['organize_by_type'] = value
-        elif section.lower() == 'defaults':
-            for option, value in config.items(section):
-                if option.lower() in {'days_to_check', 'days'}:
-                    configNew['Defaults']['days'] = value
-                elif option.lower() in {'min_score', 'score'}:
-                    configNew['Defaults']['min_score'] = value
-                elif option.lower() in {'min_favs', 'favs'}:
-                    configNew['Defaults']['min_favs'] = value
-                elif option.lower() in {'ratings', 'rating'}:
-                    configNew['Defaults']['ratings'] = value
-        elif section.lower() == 'blacklist':
-            configNew['Blacklist']['tags'] = value
-        else:
-            configNew[section] = {}
-            for option, value in config.items(section):
-                configNew[section][option] = value
+    global OPTIONS
+    global DEFAULTS
+    global BLACKLIST
+    global NEW_SECTIONS
+
+    configOld = configparser.ConfigParser()
+    make_config('configMigration.ini')
+    with open('config.ini', 'r', encoding = 'utf_8_sig') as oldFile:
+        configOld.read_file(oldFile)
+
+
+
+        #Simple way of adding to new config.
+        for section in configOld.sections():
+            if section.lower() == 'other':
+                for option, value in configOld.items(section):
+                    if option.lower() == 'include_md5':
+                            options['include_md5'] = value
+                    elif option.lower() == 'organize_by_type':
+                            options['organize_by_type'] = value
+
+            elif section.lower() == 'defaults':
+                for option, value in configOld.items(section):
+                    if option.lower() in {'days_to_check', 'days'}:
+                        defaults['days'] = value
+                    elif option.lower() in {'min_score', 'score'}:
+                        defaults['score'] = value
+                    elif option.lower() in {'min_favs', 'favs'}:
+                        defaults['favs'] = value
+                    elif option.lower() in {'ratings', 'rating'}:
+                        defaults['rating'] = value
+
+            elif section.lower() == 'blacklist':
+                blacklist['blacklist'] = value
+
+            else:
+                newSections[section][option] = value
+
+    #Now to migrate the changes
+    newFile = open('configMigration.ini','r+', encoding = 'utf_8_sig')
+    oldFile = open('config.ini', 'r', encoding = 'utf_8_sig')
+
+
 
 def get_config():
     config = configparser.ConfigParser()
