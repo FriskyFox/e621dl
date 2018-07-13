@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+'''TODO: Add Debug'''
+debug = False #Enabling of Debug provides more indepth per file Parsing
+
 # Internal Imports
 import os
 from distutils.version import StrictVersion
@@ -129,6 +132,13 @@ if __name__ == '__main__':
             # This number is hard-coded because on 64-bit archs, sys.maxsize() will return a number too big for e621 to use.
             last_id = 0x7F_FF_FF_FF
 
+            #Values to be reported back to the User
+            total_files = 0
+            downloaded = 0
+            skipped = 0
+
+            #In order: already have, missing rating, blacklisted, missing tag, low score, low fav
+            skipped_details = [0,0,0,0,0,0]
             # Sets up a loop that will continue indefinitely until the last post of a search has been found.
             while True:
                 print("[i] Getting posts...\n")
@@ -164,24 +174,42 @@ if __name__ == '__main__':
                         path = local.make_path(fileDirectory, post['id'], post['file_ext'])
 
                     if os.path.isfile(path):
-                        print(f"[✗] Post {post['id']} was already downloaded.")
+                        if debug: print(f"[✗] Post {post['id']} was already downloaded.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[0] += 1
                     elif post['rating'] not in ratings:
-                        print(f"[✗] Post {post['id']} was skipped for missing a requested rating.")
+                        if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested rating.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[1] += 1
                     # Using fnmatch allows for wildcards to be properly filtered.
                     elif [x for x in post['tags'].split() if any(fnmatch(x, y) for y in blacklist)]:
-                        print(f"[✗] Post {post['id']} was skipped for having a blacklisted tag.")
+                        if debug: print(f"[✗] Post {post['id']} was skipped for having a blacklisted tag.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[2] += 1
                     elif not set(tags[4:]).issubset(post['tags'].split()):
-                        print(f"[✗] Post {post['id']} was skipped for missing a requested tag.")
+                        if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested tag.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[3] += 1
                     elif int(post['score']) < min_score:
-                        print(f"[✗] Post {post['id']} was skipped for having a low score.")
+                        if debug: print(f"[✗] Post {post['id']} was skipped for having a low score.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[4] += 1
                     elif int(post['fav_count']) < min_favs:
-                        print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
+                        if debug: print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
+                        skipped += 1 #Increment Skipped Files
+                        skipped_details[5] += 1
                     else:
-                        print(f"[✓] Post {post['id']} was downloaded.")
+                        if debug: print(f"[✓] Post {post['id']} was downloaded.")
                         remote.download_post(post['file_url'], path, session)
+                        downloaded += 1 #Increment total downloaded
+                    if total_files % 10 == 0 and total_files != 0:
+                        print(f"{total_files} Posts Parsed... ({downloaded} Downloaded). Please wait for completion...")
+                    total_files += 1 #Increment Total Files
 
                 # Break while loop. End program.
                 if last_id == 0:
+                    print(f"A Total of {total_files} files were parsed with {downloaded} downloads and {skipped} files skipped.")
+                    print(f"Skipped file details:\n{skipped_details[0]} Already Downloaded, {skipped_details[1]} Incorrect Rating, {skipped_details[2]} Blacklisted, {skipped_details[3]} Missing Requested Tags, {skipped_details[4]} Score lower than threshhold, and {skipped_details[5]} Favorite count lower than threshhold.")
                     break
     # End program.
     input("\n[✓] All searches complete. Press ENTER to exit...")

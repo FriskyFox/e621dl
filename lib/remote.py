@@ -6,6 +6,7 @@ from timeit import default_timer
 # Personal Imports
 from . import constants
 from . import local
+import e621dl
 
 # Vendor Imports
 import requests
@@ -99,12 +100,12 @@ def get_tag_alias(user_tag, session):
     results = response.json()
 
     if '*' in user_tag and results:
-        print(f"[✓] The tag {user_tag} is valid.")
+        if e621dl.debug: print(f"[✓] The tag {user_tag} is valid.")
         return user_tag
 
     for tag in results:
         if user_tag == tag['name']:
-            print(f"[✓] The tag {prefix}{user_tag} is valid.")
+            if e621dl.debug: print(f"[✓] The tag {prefix}{user_tag} is valid.")
             return f"{prefix}{user_tag}"
 
     url = 'https://e621.net/tag_alias/index.json'
@@ -144,8 +145,8 @@ def download_post(url, path, session):
 
     header = {'Range': f"bytes={os.path.getsize(path)}-"}
     response = session.get(url, stream = True, headers = header)
-    
-    if response.ok:    
+
+    if response.ok:
         with open(path, 'ab') as outfile:
             for chunk in response.iter_content(chunk_size = 8192):
                 outfile.write(chunk)
