@@ -1,8 +1,8 @@
-[![Github All Releases](https://img.shields.io/github/downloads/wulfre/e621dl/total.svg)](https://github.com/Wulfre/e621dl/releases/latest)
 
 # What is **e621dl**?
 
 **e621dl** is an automated script, originally by [**@wwyaiykycnf**](https://github.com/wwyaiykycnf), which downloads images from e621.net. It can be used to create a local mirror of your favorite searches, and keep these searches up to date as new posts are uploaded.
+
 
 # How does **e621dl** work?
 

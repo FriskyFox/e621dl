@@ -18,22 +18,16 @@ if __name__ == '__main__':
     # The user-agent requirements are specified at (https://e621.net/help/show/api#basics).
     with remote.requests_retry_session() as session:
         session.headers['User-Agent'] = constants.USER_AGENT
-        
+
         # Check if a new version is released on github. If so, notify the user.
         if StrictVersion(constants.VERSION) < StrictVersion(remote.get_github_release(session)):
             print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB: (https://github.com/Wulfre/e621dl/releases/latest).')
 
-        print(f"[i] Running e621dl version {constants.VERSION}.")
-
-        print('')
-
-        print("[i] Checking for partial downloads...")
+        print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
 
         remote.finish_partial_downloads(session)
 
-        print('')
-
-        print("[i] Parsing config...")
+        print("\n[i] Parsing config...")
         config = local.get_config()
 
         # Initialize the lists that will be used to filter posts.
@@ -46,16 +40,23 @@ if __name__ == '__main__':
         default_score = -0x7F_FF_FF_FF # Allow posts of any score to be downloaded.
         default_favs = 0
         default_ratings = ['s'] # Allow only safe posts to be downloaded.
+        organize_file = False #Allows for organization of files by type (images/video/swf)
 
         # Iterate through all sections (lines enclosed in brackets: []).
         for section in config.sections():
 
-            # Get values from the "Other" section. Currently only used for file name appending.
+            # Get values from the "Other" section.
             if section.lower() == 'other':
                 for option, value in config.items(section):
-                    if option.lower() == 'include_md5':
-                        if value.lower() == 'true':
+                    if option.lower() == 'include_md5' and value.lower() == 'true':
                             include_md5 = True
+                    elif option.lower() == 'organize_by_type' and value.lower() == 'true':
+                            organize_file = True
+                    elif option.lower() == 'version' and value.lower() == local.VERSION:
+                            pass
+                    else:
+                        print(f'[!] It Appears that you have an old version\'s config file. Now attempting to migrate config to the latest version...')
+                        local.migrate_config()
 
             # Get values from the "Defaults" section. This overwrites the initialized default_* variables.
             elif section.lower() == 'defaults':
@@ -130,7 +131,7 @@ if __name__ == '__main__':
 
             # Sets up a loop that will continue indefinitely until the last post of a search has been found.
             while True:
-                print("[i] Getting posts...")
+                print("[i] Getting posts...\n")
                 results = remote.get_posts(search_string, earliest_date, last_id, session)
 
                 # Gets the id of the last post found in the search so that the search can continue.
@@ -142,10 +143,25 @@ if __name__ == '__main__':
                     last_id = results[-1]['id']
 
                 for post in results:
-                    if include_md5:
-                        path = local.make_path(directory, f"{post['id']}.{post['md5']}", post['file_ext'])
+                    #Orders posts as dictated by type
+                    if organize_file:
+                        if post['file_ext'] in ['png','jpg']:
+                            fileDirectory = directory+'/images'
+                        elif post['file_ext'] == 'gif':
+                            fileDirectory = directory+'/gifs'
+                        elif post['file_ext'] == 'webm':
+                            fileDirectory = directory+'/videos'
+                        elif post['file_ext'] == 'swf':
+                            fileDirectory = directory+'/swfs'
+                        else:
+                            print(f"[!] Could not determine the file type of Post {post['id']}. The type was listed as {post['file_ext']}")
                     else:
-                        path = local.make_path(directory, post['id'], post['file_ext'])
+                        fileDirectory = directory
+
+                    if include_md5:
+                        path = local.make_path(fileDirectory, f"{post['id']}.{post['md5']}", post['file_ext'])
+                    else:
+                        path = local.make_path(fileDirectory, post['id'], post['file_ext'])
 
                     if os.path.isfile(path):
                         print(f"[✗] Post {post['id']} was already downloaded.")
@@ -161,14 +177,12 @@ if __name__ == '__main__':
                     elif int(post['fav_count']) < min_favs:
                         print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
                     else:
-                        print(f"[✓] Post {post['id']} is being downloaded.")
+                        print(f"[✓] Post {post['id']} was downloaded.")
                         remote.download_post(post['file_url'], path, session)
 
                 # Break while loop. End program.
                 if last_id == 0:
                     break
-
     # End program.
-    print('')
-    input("[✓] All searches complete. Press ENTER to exit...")
-    raise SystemExit
+    input("\n[✓] All searches complete. Press ENTER to exit...")
+    #raise SystemExit
