@@ -6,7 +6,7 @@ TODO:
 + Add Updated Config Parsing without conditionals and allow for auto migration of configuration file (With User choice of Y/N)
 + Add debug option to config other as an invisible modifier
 '''
-debug = False #Enabling of Debug provides more in-depth details of operations
+debug = True #Enabling of Debug provides more in-depth details of operations
 debug_verbose = False #Enabling of the verbose per file parsing details... I got old of it quickly
 # Internal Imports
 import os
