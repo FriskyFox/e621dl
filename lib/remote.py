@@ -4,8 +4,8 @@ from time import sleep
 from timeit import default_timer
 
 # Personal Imports
-from . import constants
-from . import local
+from lib import constants
+from lib import local
 import e621dl
 
 # Vendor Imports
@@ -53,7 +53,6 @@ def get_github_release(session):
     response.raise_for_status()
 
     return response.json()['name'].strip('v')
-
 
 def get_posts(search_string, earliest_date, last_id, session):
     url = 'https://e621.net/post/index.json'
