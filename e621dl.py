@@ -6,8 +6,8 @@ TODO:
 + Add Updated Config Parsing without conditionals and allow for auto migration of configuration file (With User choice of Y/N)
 + Add debug option to config other as an invisible modifier
 '''
-debug = True #Enabling of Debug provides more in-depth 'per file' Parsing - Temporary option
-
+debug = False #Enabling of Debug provides more in-depth details of operations
+debug_verbose = False #Enabling of the verbose per file parsing details... I got old of it quickly
 # Internal Imports
 import os
 from fnmatch import fnmatch
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         # Check if a new version is released on github. If so, notify the user.
         if StrictVersion(constants.VERSION) < StrictVersion(remote.get_github_release(session)):
             print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB AT https://github.com/FriskyFox/e621dl/releases.')
-            if debug: print(f"[i] The current release version is {remote.get_github_release(session)}, while current version running is {constants.VERSION}")
+        if debug: print(f"[i] The current release version is {remote.get_github_release(session)}, while current version running is {constants.VERSION}")
         print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
 
         remote.finish_partial_downloads(session)
@@ -117,9 +117,15 @@ if __name__ == '__main__':
                 # Note section_tags is a list within a list.
                 searches.append({'directory': section, 'tags': section_tags, 'ratings': section_ratings, 'min_score': section_score, 'min_favs': section_favs, 'earliest_date': section_date})
 
+        #Values for logging at end of run
+        logging = {'total_files':0,'total_downloaded':0,'total_skipped':0, 'total_queries':0}
+        skipped_details = {'already_have':0,'missing_rating':0,'blacklisted':0,'missing_tag':0,'low_score':0,'low_fav':0}
+        section_totals = list()
+
         for search in searches:
             print('')
 
+            search_details = {'downloaded':0,'skipped':0,'parsed':0,'queries':0}
             # Creates the string to be sent to the API.
             # Currently only 5 items can be sent directly so the rest are discarded to be filtered out later.
             if len(search['tags']) > 5:
@@ -131,24 +137,19 @@ if __name__ == '__main__':
             # This number is hard-coded because on 64-bit archs, sys.maxsize() will return a number too big for e621 to use.
             last_id = 0x7F_FF_FF_FF
 
-            #Values to be reported back to the User
-            total_files = 0
-            downloaded = 0
-            skipped = 0
-            total_queries = 0
-
-            #In order: already have, missing rating, blacklisted, missing tag, low score, low fav
-            skipped_details = [0,0,0,0,0,0]
             # Sets up a loop that will continue indefinitely until the last post of a search has been found.
             while True:
-                total_queries += 1 #Debug stuff
+                search_details['queries'] += 1
                 print("[i] Getting posts...\n")
-                if debug: print("Post Acquirement #{total_queries}")
+                if debug: print(f"Post Acquirement #{search_details['queries']} from e621 API") #Debug stuff
+
                 results = remote.get_posts(search_string, search['earliest_date'], last_id, session)
 
-                # Gets the id of the last post found in the search so that the search can continue.
-                # If the number of results is less than the max, the next searches will always return 0 results.
-                # Because of this, the last id is set to 0 which is the base case for exiting the while loop.
+                '''
+                Gets the id of the last post found in the search so that the search can continue.
+                If the number of results is less than the max, the next searches will always return 0 results.
+                Because of this, the last id is set to 0 which is the base case for exiting the while loop.
+                '''
                 if len(results) < constants.MAX_RESULTS:
                     last_id = 0
                 else:
@@ -176,44 +177,59 @@ if __name__ == '__main__':
                         path = local.make_path(fileDirectory, post['id'], post['file_ext'])
 
                     if os.path.isfile(path):
-                        if debug: print(f"[✗] Post {post['id']} was already downloaded.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[0] += 1
+                        if debug_verbose: print(f"[✗] Post {post['id']} was already downloaded.")
+
+                        search_details['skipped'] += 1
+                        skipped_details['already_have'] += 1
                     elif post['rating'] not in search['ratings']:
-                        if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested rating.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[1] += 1
+                        if debug_verbose: print(f"[✗] Post {post['id']} was skipped for missing a requested rating.")
+
+                        search_details['skipped'] += 1
+                        skipped_details['missing_rating'] += 1
                     # Using fnmatch allows for wildcards to be properly filtered.
                     elif [x for x in post['tags'].split() if any(fnmatch(x, y) for y in blacklist)]:
-                        if debug: print(f"[✗] Post {post['id']} was skipped for having a blacklisted tag.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[2] += 1
-                    elif not set(search['tags'][4:]).issubset(post['tags'].split()):
-                        if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested tag.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[3] += 1
-                    elif int(post['score']) < search['min_score']:
-                        if debug: print(f"[✗] Post {post['id']} was skipped for having a low score.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[4] += 1
-                    elif int(post['fav_count']) < search['min_favs']:
-                        if debug: print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
-                        skipped += 1 #Increment Skipped Files
-                        skipped_details[5] += 1
-                    else:
-                        if debug: print(f"[✓] Post {post['id']} was downloaded.")
-                        remote.download_post(post['file_url'], path, session)
-                        downloaded += 1 #Increment total downloaded
-                    if debug and total_files % 10 == 0 and total_files != 0: #More debug
-                        print(f"{total_files} Posts Parsed... ({downloaded} Downloaded). Please wait for completion...")
-                    total_files += 1 #Increment Total Files
+                        if debug_verbose: print(f"[✗] Post {post['id']} was skipped for having a blacklisted tag.")
 
+                        search_details['skipped'] += 1
+                        skipped_details['blacklisted'] += 1
+                    elif not set(search['tags'][4:]).issubset(post['tags'].split()):
+                        if debug_verbose: print(f"[✗] Post {post['id']} was skipped for missing a requested tag.")
+
+                        search_details['skipped'] += 1
+                        skipped_details['missing_tag'] += 1
+                    elif int(post['score']) < search['min_score']:
+                        if debug_verbose: print(f"[✗] Post {post['id']} was skipped for having a low score.")
+
+                        search_details['skipped'] += 1
+                        skipped_details['low_score'] += 1
+                    elif int(post['fav_count']) < search['min_favs']:
+                        if debug_verbose: print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
+
+                        search_details['skipped'] += 1
+                        skipped_details['low_fav'] += 1
+                    else:
+                        if debug_verbose: print(f"[✓] Post {post['id']} was downloaded.")
+                        remote.download_post(post['file_url'], path, session)
+
+                        search_details['downloaded'] += 1 #Increment section downloaded
+
+                    search_details['parsed'] += 1 #Increment section files parsed
+                    if search_details['parsed'] % 30 == 0 and search_details['parsed'] != 0:
+                        print(f"[i] Downloads are still in progress... so far {search_details['parsed']} files have been parsed")
                 # Break while loop. End program.
                 if last_id == 0:
+                    if debug: print(f"So far in total {logging['total_files']} files have been parsed...")
+                    section_totals.append(search_details)
                     break
-            print(f"\nFor Search {directory} a total of [add session files] were parsed with [add session downloads] files downloaded. ([add percentage of downloads to parsing])")
-        print(f"\nA Total of {total_files} files were parsed with {downloaded} downloads and {skipped} files skipped.")
-        print(f"Skipped file details:\n{skipped_details[0]} Already Downloaded, {skipped_details[1]} Incorrect Rating, {skipped_details[2]} Blacklisted, {skipped_details[3]} Missing Requested Tags, {skipped_details[4]} Score lower than threshhold, and {skipped_details[5]} Favorite count lower than threshhold.")
+            #Offer a breakdown of the previous section's results
+            print(f"\nFor search '{search['directory']}' a total of {search_details['parsed']} files were parsed with {search_details['downloaded']} files downloaded. ({round(search_details['downloaded']/search_details['parsed'],1)}% Downloaded)")
+        for section in section_totals:
+            logging['total_files'] += section['parsed']
+            logging['total_downloaded'] += section['downloaded']
+            logging['total_skipped'] += section['skipped']
+            logging['total_queries'] += section['queries']
+        print(f"\n[i] Grand Totals:\n+ A Total of {logging['total_files']} files were parsed\n+ {logging['total_downloaded']} files were downloaded\n+ {logging['total_skipped']} files were skipped.")
+        print(f"\n[i] Skipped file details:\n+ {skipped_details['already_have']} files were already downloaded\n+ {skipped_details['missing_rating']} files had an incorrect rating\n+ {skipped_details['blacklisted']} files were blacklisted\n+ {skipped_details['missing_tag']} files were missing requested tags\n+ {skipped_details['low_score']} files had a score lower than the threshhold\n+ {skipped_details['low_fav']} files had a favorite count lower than the threshhold")
     # End program.
-    input("\n[✓] All searches complete. Press ENTER to exit...")
-    #raise SystemExit
+    input("\n[✓] All searches have completed. Press ENTER to exit...")
+    if not debug: raise SystemExit
