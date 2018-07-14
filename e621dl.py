@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''TODO: Add Updated Config Parsing without conditionals and allow for auto migration of configuration file (With User choice of Y/N)'''
-debug = True #Enabling of Debug provides more in-depth 'per file' Parsing
+'''
+TODO:
++ Add Updated Config Parsing without conditionals and allow for auto migration of configuration file (With User choice of Y/N)
++ Add debug option to config other as an invisible modifier
+'''
+debug = True #Enabling of Debug provides more in-depth 'per file' Parsing - Temporary option
 
 # Internal Imports
 import os
 from fnmatch import fnmatch
+from distutils.version import StrictVersion
 
 # Personal Imports
 from lib import constants
@@ -22,7 +27,7 @@ if __name__ == '__main__':
         session.headers['User-Agent'] = constants.USER_AGENT
 
         # Check if a new version is released on github. If so, notify the user.
-        if constants.VERSION < remote.get_github_release(session):
+        if StrictVersion(constants.VERSION) < StrictVersion(remote.get_github_release(session)):
             print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB AT https://github.com/FriskyFox/e621dl/releases.')
             if debug: print(f"[i] The current release version is {remote.get_github_release(session)}, while current version running is {constants.VERSION}")
         print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
@@ -203,15 +208,16 @@ if __name__ == '__main__':
                         if debug: print(f"[✓] Post {post['id']} was downloaded.")
                         remote.download_post(post['file_url'], path, session)
                         downloaded += 1 #Increment total downloaded
-                    if total_files % 10 == 0 and total_files != 0:
+                    if debug and total_files % 10 == 0 and total_files != 0: #More debug
                         print(f"{total_files} Posts Parsed... ({downloaded} Downloaded). Please wait for completion...")
                     total_files += 1 #Increment Total Files
 
                 # Break while loop. End program.
                 if last_id == 0:
-                    print(f"A Total of {total_files} files were parsed with {downloaded} downloads and {skipped} files skipped.")
-                    print(f"Skipped file details:\n{skipped_details[0]} Already Downloaded, {skipped_details[1]} Incorrect Rating, {skipped_details[2]} Blacklisted, {skipped_details[3]} Missing Requested Tags, {skipped_details[4]} Score lower than threshhold, and {skipped_details[5]} Favorite count lower than threshhold.")
                     break
+            print(f"\nFor Search {directory} a total of [add session files] were parsed with [add session downloads] files downloaded. ([add percentage of downloads to parsing])")
+        print(f"\nA Total of {total_files} files were parsed with {downloaded} downloads and {skipped} files skipped.")
+        print(f"Skipped file details:\n{skipped_details[0]} Already Downloaded, {skipped_details[1]} Incorrect Rating, {skipped_details[2]} Blacklisted, {skipped_details[3]} Missing Requested Tags, {skipped_details[4]} Score lower than threshhold, and {skipped_details[5]} Favorite count lower than threshhold.")
     # End program.
     input("\n[✓] All searches complete. Press ENTER to exit...")
     #raise SystemExit

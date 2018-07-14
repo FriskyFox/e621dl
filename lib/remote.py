@@ -47,12 +47,18 @@ def delayed_post(url, payload, session):
     return response
 
 def get_github_release(session):
-    url = 'https://api.github.com/repos/friskyfox/e621dl/tags'
+
+    url = 'https://api.github.com/repos/wulfre/e621dl/releases/latest'
+
+
 
     response = session.get(url)
+
     response.raise_for_status()
 
-    return response.json()['name'].strip('v')
+
+
+    return response.json()['tag_name'].strip('v')
 
 def get_posts(search_string, earliest_date, last_id, session):
     url = 'https://e621.net/post/index.json'
