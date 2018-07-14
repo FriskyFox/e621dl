@@ -162,12 +162,15 @@ def download_post(url, path, session):
     print(f"[!] The downoad URL {url} is not available. Error code: {response.status_code}.")
 
 def finish_partial_downloads(session):
+    found = False
     for root, dirs, files in os.walk('downloads/'):
         for file in files:
             if file.endswith(constants.PARTIAL_DOWNLOAD_EXT):
                 print(f"[!] Partial download {file} found.")
+                found = True
 
                 path = os.path.join(root, file)
                 url = get_known_post(file.split('.')[0], session)['file_url']
 
                 download_post(url, path, session)
+    if not found: print("[✓] No partial downloads found")
