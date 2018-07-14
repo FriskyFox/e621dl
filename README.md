@@ -1,13 +1,3 @@
-Options:
-
-Open Python -> give full absolute path to e621dl.py (C:/Folder/Whatever/e621dl.py)
-python C:/Folder/Whatever/e621dl.py
-
-Or if that doesn't work, you don't have python as a PATHENV variable in your system environment variables.
-IF you want that, aka able to access python anywhere from console, (and you're on windows 10), type into the search bar
-"system environment variables" **you need to have Administrator for this, select Environment Variables at the bottom,
-*I may be wrong about administrator but I am an administrator on my home account so I wouldn't know.
-
 # What is **e621dl**?
 
 **e621dl** is an automated script, originally by [**@wwyaiykycnf**](https://github.com/wwyaiykycnf), which downloads images from e621.net. It can be used to create a local mirror of your favorite searches, and keep these searches up to date as new posts are uploaded.
@@ -164,9 +154,22 @@ The runtime of e621dl is very self-explanatory, explaining each step as it conti
 
 Yeah... this above one should net you [depending on ratings allowed] **literally all of e621** because unsuprisingly almost all furries are canines
 
-# Automation of **e621dl**
-
 It should be recognized that **e621dl**, as a script, can be scheduled to run as often as you like, keeping the your local collections always up-to-date, however, the methods for doing this are dependent on your platform, and are outside the scope of this quick-guide. Good luck though and happy parsing!
+
+## Fixing Broken Python via CMD [Windows Only]
+So, sometimes Python installs, but doesn't install its system environment PATH variable.
+
+
+If that's your problem, this is your fix.
+
+**NOTE: I am unsure but I think this requires Administrator privileges (I'm always Administrator anywhere I go so sorry if you can't do it)**
+
+IF you want to be able to access python anywhere from console, (**and you're on windows 10**), type into the search bar
+`system environment variables` OTHERWISE (**Windows 7**) navigate to `System Properties` (I believe you can right click in file explorer while not being in any system drive and on the `This PC` section and select `Properties` to navigate quickly to this section)
+
+A window will open with the title being System Properties. Select `Environment Variables...` at the bottom. If you would like anyone on the computer to be able to access it: Select `Path` -> `Edit...` under `System Variables` section. Click `New` and then add the absolute path to your python installation. (For example, my path is `C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python36_64) This now allows you to type python in console (**PROVIDED It is named python.exe at your directory, check the name of the python executable environment**).
+
+If you would like this to be only on your user account do all of the above under `User variables for <USER ACCOUNT>`
 
 # Feedback and Requests
 
