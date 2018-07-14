@@ -87,9 +87,9 @@ if __name__ == '__main__':
                 for tag in total_to_check:
                     temp += 1
                     blacklist.append(remote.get_tag_alias(tag.lower(), session))
-                    if tag % 10 == 0:
+                    if temp % 10 == 0:
                         print(f"[i] Still checking blacklist tags... ({temp}/{len(total_to_check)})")
-                    elif tag == len(total_to_check):
+                    elif temp == len(total_to_check):
                         print("[i] All blacklist tags have been checked")
 
             # If the section name is not one of the above, it is assumed to be the values for a search.
