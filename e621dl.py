@@ -59,7 +59,8 @@ if __name__ == '__main__':
                         if option.lower() == 'include_md5' and value.lower() == 'true':
                                 include_md5 = True
                         elif option.lower() == 'organize_by_type' and value.lower() == 'true':
-                                organize_file = True
+                            print("[!] Organizing Files by Type")
+                            organize_file = True
                         elif option.lower() == 'version' and value.lower() == local.VERSION:
                                 pass
                 except KeyError:
@@ -114,25 +115,17 @@ if __name__ == '__main__':
 
                 # Append the final values that will be used for the specific section to the list of searches.
                 # Note section_tags is a list within a list.
-                searches.append([section, section_tags, section_ratings, section_score, section_favs, section_date])
+                searches.append({'directory': section, 'tags': section_tags, 'ratings': section_ratings, 'min_score': section_score, 'min_favs': section_favs, 'earliest_date': section_date})
 
         for search in searches:
             print('')
 
-            # Re-assign each element of the search list to an easier to remember name. There is probably a better way.
-            directory = search[0]
-            tags = search[1]
-            ratings = search[2]
-            min_score = search[3]
-            min_favs = search[4]
-            earliest_date = search[5]
-
             # Creates the string to be sent to the API.
             # Currently only 5 items can be sent directly so the rest are discarded to be filtered out later.
-            if len(tags) > 5:
-                search_string = ' '.join(tags[:5])
+            if len(search['tags']) > 5:
+                search_string = ' '.join(search['tags'][:5])
             else:
-                search_string = ' '.join(tags)
+                search_string = ' '.join(search['tags'])
 
             # Initializes last_id (the last post found in a search) to an enormous number so that the newest post will be found.
             # This number is hard-coded because on 64-bit archs, sys.maxsize() will return a number too big for e621 to use.
@@ -142,13 +135,16 @@ if __name__ == '__main__':
             total_files = 0
             downloaded = 0
             skipped = 0
+            total_queries = 0
 
             #In order: already have, missing rating, blacklisted, missing tag, low score, low fav
             skipped_details = [0,0,0,0,0,0]
             # Sets up a loop that will continue indefinitely until the last post of a search has been found.
             while True:
+                total_queries += 1 #Debug stuff
                 print("[i] Getting posts...\n")
-                results = remote.get_posts(search_string, earliest_date, last_id, session)
+                if debug: print("Post Acquirement #{total_queries}")
+                results = remote.get_posts(search_string, search['earliest_date'], last_id, session)
 
                 # Gets the id of the last post found in the search so that the search can continue.
                 # If the number of results is less than the max, the next searches will always return 0 results.
@@ -162,13 +158,13 @@ if __name__ == '__main__':
                     #Orders posts as dictated by type
                     if organize_file:
                         if post['file_ext'] in ['png','jpg']:
-                            fileDirectory = directory+'/images'
+                            fileDirectory = search['directory']+'/images'
                         elif post['file_ext'] == 'gif':
-                            fileDirectory = directory+'/gifs'
+                            fileDirectory = search['directory']+'/gifs'
                         elif post['file_ext'] == 'webm':
-                            fileDirectory = directory+'/videos'
+                            fileDirectory = search['directory']+'/videos'
                         elif post['file_ext'] == 'swf':
-                            fileDirectory = directory+'/swfs'
+                            fileDirectory = search['directory']+'/swfs'
                         else:
                             print(f"[!] Could not determine the file type of Post {post['id']}. The type was listed as {post['file_ext']}")
                     else:
@@ -183,7 +179,7 @@ if __name__ == '__main__':
                         if debug: print(f"[✗] Post {post['id']} was already downloaded.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[0] += 1
-                    elif post['rating'] not in ratings:
+                    elif post['rating'] not in search['ratings']:
                         if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested rating.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[1] += 1
@@ -192,15 +188,15 @@ if __name__ == '__main__':
                         if debug: print(f"[✗] Post {post['id']} was skipped for having a blacklisted tag.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[2] += 1
-                    elif not set(tags[4:]).issubset(post['tags'].split()):
+                    elif not set(search['tags'][4:]).issubset(post['tags'].split()):
                         if debug: print(f"[✗] Post {post['id']} was skipped for missing a requested tag.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[3] += 1
-                    elif int(post['score']) < min_score:
+                    elif int(post['score']) < search['min_score']:
                         if debug: print(f"[✗] Post {post['id']} was skipped for having a low score.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[4] += 1
-                    elif int(post['fav_count']) < min_favs:
+                    elif int(post['fav_count']) < search['min_favs']:
                         if debug: print(f"[✗] Post {post['id']} was skipped for having a low favorite count.")
                         skipped += 1 #Increment Skipped Files
                         skipped_details[5] += 1
