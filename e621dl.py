@@ -6,7 +6,6 @@ debug = False #Enabling of Debug provides more indepth per file Parsing
 
 # Internal Imports
 import os
-from distutils.version import StrictVersion
 from fnmatch import fnmatch
 
 # Personal Imports
@@ -23,7 +22,7 @@ if __name__ == '__main__':
         session.headers['User-Agent'] = constants.USER_AGENT
 
         # Check if a new version is released on github. If so, notify the user.
-        if StrictVersion(constants.VERSION) < StrictVersion(remote.get_github_release(session)):
+        if constants.VERSION > remote.get_github_release(session):
             print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB: (https://github.com/Wulfre/e621dl/releases/latest).')
 
         print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
