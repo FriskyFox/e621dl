@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''TODO: Add Debug'''
-debug = False #Enabling of Debug provides more indepth per file Parsing
+'''TODO: Add Updated Config Parsing without conditionals and allow for auto migration of configuration file (With User choice of Y/N)'''
+debug = True #Enabling of Debug provides more in-depth 'per file' Parsing
 
 # Internal Imports
 import os
@@ -22,9 +22,9 @@ if __name__ == '__main__':
         session.headers['User-Agent'] = constants.USER_AGENT
 
         # Check if a new version is released on github. If so, notify the user.
-        if constants.VERSION > remote.get_github_release(session):
-            print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB: (https://github.com/Wulfre/e621dl/releases/latest).')
-
+        if constants.VERSION < remote.get_github_release(session):
+            print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB AT https://github.com/FriskyFox/e621dl/releases.')
+            if debug: print(f"[i] The current release version is {remote.get_github_release(session)}, while current version running is {constants.VERSION}")
         print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
 
         remote.finish_partial_downloads(session)
@@ -49,16 +49,18 @@ if __name__ == '__main__':
 
             # Get values from the "Other" section.
             if section.lower() == 'other':
-                for option, value in config.items(section):
-                    if option.lower() == 'include_md5' and value.lower() == 'true':
-                            include_md5 = True
-                    elif option.lower() == 'organize_by_type' and value.lower() == 'true':
-                            organize_file = True
-                    elif option.lower() == 'version' and value.lower() == local.VERSION:
-                            pass
-                    else:
-                        print(f'[!] It Appears that you have an old version\'s config file. Now attempting to migrate config to the latest version...')
-                        local.migrate_config()
+                try:
+                    for option, value in config.items(section):
+                        if option.lower() == 'include_md5' and value.lower() == 'true':
+                                include_md5 = True
+                        elif option.lower() == 'organize_by_type' and value.lower() == 'true':
+                                organize_file = True
+                        elif option.lower() == 'version' and value.lower() == local.VERSION:
+                                pass
+                except KeyError:
+                    #Not Set Up Yet!!!
+                    print(f'[!] It Appears that you have an old version\'s config file. Now attempting to migrate config to the latest version...')
+                    local.migrate_config()
 
             # Get values from the "Defaults" section. This overwrites the initialized default_* variables.
             elif section.lower() == 'defaults':
