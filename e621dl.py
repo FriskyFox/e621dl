@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         remote.finish_partial_downloads(session)
 
-        print("\n[i] Parsing config...")
+        print("\n[i] Parsing user config...")
         config = local.get_config()
 
         # Initialize the lists that will be used to filter posts.
@@ -82,7 +82,15 @@ if __name__ == '__main__':
 
             # Get values from the "Blacklist" section. Tags are aliased to their acknowledged names.
             elif section.lower() == 'blacklist':
-                blacklist = [remote.get_tag_alias(tag.lower(), session) for tag in config.get(section, 'tags').replace(',', ' ').lower().strip().split()]
+                temp = 0 #Checker for long blacklists for the user to understand that blacklist checking is occurring
+                total_to_check = config.get(section, 'tags').replace(',', ' ').lower().strip().split()
+                for tag in total_to_check:
+                    temp += 1
+                    blacklist.append(remote.get_tag_alias(tag.lower(), session))
+                    if tag % 10 == 0:
+                        print(f"[i] Still checking blacklist tags... ({temp}/{len(total_to_check)})")
+                    elif tag == len(total_to_check):
+                        print("[i] All blacklist tags have been checked")
 
             # If the section name is not one of the above, it is assumed to be the values for a search.
             else:
