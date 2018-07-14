@@ -132,7 +132,7 @@ def get_tag_alias(user_tag, session):
 
             results = response.json()
 
-            print(f"[✓] The tag {prefix}{user_tag} was changed to {prefix}{results['name']}.")
+            print(f"[i] The tag {prefix}{user_tag} was changed to {prefix}{results['name']}.")
 
             return f"{prefix}{results['name']}"
 
@@ -159,7 +159,8 @@ def download_post(url, path, session):
 
         os.rename(path, path.replace(f".{constants.PARTIAL_DOWNLOAD_EXT}", ''))
 
-    print(f"[!] The downoad URL {url} is not available. Error code: {response.status_code}.")
+    else:
+        print(f"[!] The download URL {url} is not available. Error code: {response.status_code}.")
 
 def finish_partial_downloads(session):
     found = False

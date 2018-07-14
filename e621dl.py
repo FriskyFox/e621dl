@@ -20,6 +20,8 @@ from lib import remote
 
 # This block will only be read if e621dl.py is directly executed by python. Not if it is imported.
 if __name__ == '__main__':
+    if debug:
+        print("[!] Running e621dl with Debug active\n")
 
     # Create the requests session that will be used throughout the run and set the user-agent.
     # The user-agent requirements are specified at (https://e621.net/help/show/api#basics).
@@ -30,7 +32,8 @@ if __name__ == '__main__':
         if StrictVersion(constants.VERSION) < StrictVersion(remote.get_github_release(session)):
             print('A NEW VERSION OF e621dl IS AVAILABLE ON GITHUB AT https://github.com/FriskyFox/e621dl/releases.')
         if debug: print(f"[i] The current release version is {remote.get_github_release(session)}, while current version running is {constants.VERSION}")
-        print(f"[i] Running e621dl version {constants.VERSION}.\n[i] Checking for partial downloads...")
+        if not debug: print(f"[i] Running e621dl version {constants.VERSION}.")
+        print("[i] Checking for partial downloads...")
 
         remote.finish_partial_downloads(session)
 
@@ -82,7 +85,7 @@ if __name__ == '__main__':
 
             # Get values from the "Blacklist" section. Tags are aliased to their acknowledged names.
             elif section.lower() == 'blacklist':
-                print("\n[i] Checking user blacklist...")
+                print("[i] Checking user blacklist...")
                 temp = 0 #Checker for long blacklists for the user to understand that blacklist checking is occurring
                 total_to_check = config.get(section, 'tags').replace(',', ' ').lower().strip().split()
                 for tag in total_to_check:
@@ -90,8 +93,8 @@ if __name__ == '__main__':
                     blacklist.append(remote.get_tag_alias(tag.lower(), session))
                     if temp % 10 == 0:
                         print(f"[i] Still checking blacklist tags... ({temp}/{len(total_to_check)})")
-                    elif temp == len(total_to_check):
-                        print(f"[✓] All blacklist tags have been checked ({temp}/{len(total_to_check)})")
+                print(f"[✓] All blacklist tags have been checked ({temp}/{len(total_to_check)})")
+
 
             # If the section name is not one of the above, it is assumed to be the values for a search.
             else:
@@ -110,7 +113,7 @@ if __name__ == '__main__':
 
                     # Get the tags that will be searched for. Tags are aliased to their acknowledged names.
                     if option.lower() in {'tags', 'tag'}:
-                        print(f"\n[i] Checking tags on {section}...")
+                        print(f"\n[i] Checking tags on '{section}'...")
                         temp = 0 #Checker for long user directory tags for the user to understand that tag checking is occurring
                         total_to_check = value.replace(',', ' ').lower().strip().split()
                         for tag in total_to_check:
@@ -118,8 +121,7 @@ if __name__ == '__main__':
                             section_tags.append(remote.get_tag_alias(tag.lower(), session))
                             if temp % 10 == 0:
                                 print(f"[i] Still checking {section} tags... ({temp}/{len(total_to_check)})")
-                            elif temp == len(total_to_check):
-                                print(f"[✓] All tags for {section} have been checked ({temp}/{len(total_to_check)})")
+                        print(f"[✓] All tags for {section} have been checked ({temp}/{len(total_to_check)})")
 
                     # Overwrite default options if the user has a specific value for the section
                     elif option.lower() in {'days_to_check', 'days'}:
@@ -140,10 +142,10 @@ if __name__ == '__main__':
         skipped_details = {'already_have':0,'missing_rating':0,'blacklisted':0,'missing_tag':0,'low_score':0,'low_fav':0}
         section_totals = list()
 
-        print("\n[i] Getting posts...\n")
+        print("\n[i] Getting posts...")
 
         for search in searches:
-            print(f"[i] Beggining search \'{search['directory']}\'")
+            print(f"\n[i] Beggining search '{search['directory']}'")
 
             search_details = {'downloaded':0,'skipped':0,'parsed':0,'queries':0}
             # Creates the string to be sent to the API.
@@ -161,7 +163,7 @@ if __name__ == '__main__':
             while True:
                 search_details['queries'] += 1
 
-                if debug: print(f"Post Acquirement #{search_details['queries']} from e621 API") #Debug stuff
+                if debug: print(f"[i] Post Acquirement #{search_details['queries']} from e621 API for '{search['directory']}'") #Debug stuff
 
                 results = remote.get_posts(search_string, search['earliest_date'], last_id, session)
 
@@ -238,7 +240,6 @@ if __name__ == '__main__':
                         print(f"[i] Downloads are still in progress... so far {search_details['parsed']} files have been parsed")
                 # Break while loop. End program.
                 if last_id == 0:
-                    if debug: print(f"So far in total {logging['total_files']} files have been parsed...")
                     section_totals.append(search_details)
                     break
             #Offer a breakdown of the previous section's results
@@ -248,7 +249,7 @@ if __name__ == '__main__':
             logging['total_downloaded'] += section['downloaded']
             logging['total_skipped'] += section['skipped']
             logging['total_queries'] += section['queries']
-        print(f"\n[i] Grand Totals:\n+ A Total of {logging['total_files']} files were parsed\n+ {logging['total_downloaded']} files were downloaded\n+ {logging['total_skipped']} files were skipped.")
+        print(f"\n[i] Grand Totals of run-time:\n+ A Total of {logging['total_files']} files were parsed\n+ {logging['total_downloaded']} files were downloaded\n+ {logging['total_skipped']} files were skipped.")
         print(f"\n[i] Skipped file details:\n+ {skipped_details['already_have']} files were already downloaded\n+ {skipped_details['missing_rating']} files had an incorrect rating\n+ {skipped_details['blacklisted']} files were blacklisted\n+ {skipped_details['missing_tag']} files were missing requested tags\n+ {skipped_details['low_score']} files had a score lower than the threshhold\n+ {skipped_details['low_fav']} files had a favorite count lower than the threshhold")
     # End program.
     input("\n[✓] All searches have completed. Press ENTER to exit...")
