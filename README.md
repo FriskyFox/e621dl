@@ -1,3 +1,12 @@
+Options:
+
+Open Python -> give full absolute path to e621dl.py (C:/Folder/Whatever/e621dl.py)
+python C:/Folder/Whatever/e621dl.py
+
+Or if that doesn't work, you don't have python as a PATHENV variable in your system environment variables.
+IF you want that, aka able to access python anywhere from console, (and you're on windows 10), type into the search bar
+"system environment variables" **you need to have Administrator for this, select Environment Variables at the bottom,
+*I may be wrong about administrator but I am an administrator on my home account so I wouldn't know.
 
 # What is **e621dl**?
 
@@ -15,27 +24,32 @@ Once it knows these things, it goes through the searches one by one, and downloa
 
 # Installing and Setting Up **e621dl**
 
-- Download [the latest executable release of **e621dl**](https://github.com/wulfre/e621dl/releases).
+- Download [the latest executable release of **e621dl**](https://github.com/FriskyFox/e621dl/releases).
 
 *or*
 
 - Download and install [the latest release of Python 3](https://www.python.org/downloads/).
-- Download [the latest *source* release of **e621dl**](https://github.com/wulfre/e621dl/releases).
+- Download [the latest *source* release of **e621dl**](https://github.com/FriskyFox/e621dl/releases).
     - Decompress the archive into any directory you would like.
 
 # Running **e621dl**
 ## Running **e621dl** from the Windows executable.
 
-- Double click the e621dl.exe icon to run the program. It will close immediately on completion.
-    - If you would like to read the output after the execution is complete, run the program through the command prompt in the directory that you placed the .exe file.
+- Double click the e621dl.exe icon to run the program.
+    - If you would like to read the output after the execution is complete, alternatively run the program through the command prompt in the directory that you placed the .exe file.
+    ```
+    C:[Directory of Executable]> e621dl.exe
+    ```
 
 ## Running **e621dl** from source.
 
 You must install all of this program's python dependencies for it to run properly from source. They can be installed by running the following command in your command shell: `pip install [package name]`.
 *You must run your command shell with admin/sudo permissions for the installation of new packages to be successful.*
 
+**NOTE**: If neither python, py, pip etc. work and you are on Windows, ensure that python is registered as a PATHENV variable. A guide to do this is at the end of the readme if required
+
 The required packages for **e621dl** are currently:
-- [requests](https://python-requests.org)
+- [requests](https://python-requests.org) `pip install requests`
 
 Open your command shell in the directory you decompressed e621dl into, and run the command `py e621dl.py`. Depending on your system, the command `py` may default to Python 2. In this case you should run `py -3 e621dl.py`. Sometimes, your system may not recognize the `py` command at all. In this case you should run `python3 e621dl.py`. In some cases where Python 3 was the first installed version of Python, the command `python e621dl.py` will be used.
     - The most common error that occurs when running a Python 3 program in Python 2 is `SyntaxError: Missing parentheses in call to 'print'`.
@@ -45,16 +59,17 @@ Open your command shell in the directory you decompressed e621dl into, and run t
 The first time you run **e621dl**, you will see the following errors:
 
 ```
-e621dl      INFO     Running e621dl version X.X.X -- Forked from 2.4.6.
-local       ERROR    No config file found.
-local       INFO     New default config file created. Please add tag groups to this file.
+[i] Running e621dl version X.X.X.
+[i] Checking for partial downloads...
+[i] New default config file created. Please add tag groups to this file.
+Press ENTER to exit...
 ```
 
-These errors are normal behavior for a first run, and should not raise any alarm. **e621dl** is telling you that it was unable to find a `config.ini` file, so a generic one was created.
+**e621dl** on first run creates a configuration file for you to edit. Please open this file in your preferred text editor.
 
 ## Add search groups to the config file.
 
-Create sections in the `config.ini` to specify which posts you would like to download. In the default config file, an example is provided for you. This example is replecated below. Each section will have its own directory inside the downloads folder.
+Create sections in the `config.ini` to specify which posts you would like to download. In the default config file, an example is provided for you. This example is replicated below. Each section will have its own directory inside the downloads folder.
 
 ```
 ;;;;;;;;;;;;;;;;;;;
@@ -76,11 +91,11 @@ Create sections in the `config.ini` to specify which posts you would like to dow
 ; tags = cat, cute
 ```
 
-The following characters are not allowed in search group names: `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, and ` ` as they can cause issues in windows file directories. If any of these characters are used, they will be replaced with the `_` character. The `/` character _is_ allowed to be used in section names, but it will be understood as a sub-directory. This may be useful to some users for organization. For example: separating `[Canine/Fox]` and `[Canine/Wolf]`, and separating `[Feline/Tiger]` and `[Feline/Lion]`
+The following characters are not allowed in search group names: `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, and ` ` as they can cause issues in windows file directories. If any of these characters are used, they will be replaced with the `_` character. The `/` character *is* allowed to be used in section names, but **it will be understood as a sub-directory**. This may be useful to some users for organization. For example: separating `[Canine/Fox]` and `[Canine/Wolf]`, and separating `[Feline/Tiger]` and `[Feline/Lion]`
 
-Commas should be used to separate tags and ratings, but this is not strictly enforced in current versions of **e621dl**.
+Commas should be used to separate tags and ratings, but this is not strictly enforced in current versions of **e621dl**. But *please ensure there is separation via spaces if there are no commas otherwise tags will be ignored*.
 
-One side effect of the workaround used to search an unlimited number tags is that you may only use up to 4 meta tags `:`, negative tags `-`, operational tags `~`, or wildcard tags `*` per group, and they must be the first 4 items in the group. See [the e621 cheatsheet](https://e621.net/help/show/cheatsheet) for more information on these special types of tags.
+One side effect of the workaround used to search an unlimited number tags is that you may only use up to 4 meta tags `:`, negative tags `-`, operational tags `~`, or wildcard tags `*` per group, and they must be the **first 4 items in the group**. See [the e621 cheatsheet](https://e621.net/help/show/cheatsheet) for more information on these special types of tags.
 
 ### Search Group Keys, Values, and Descriptions
 
@@ -90,6 +105,7 @@ Key                   | Acceptable Values               | Description
 days                  | Integer from `1` to ∞           | How many days into the past to check for new posts.
 ratings               | Characters `s`, `q`, and/or `e` | Acceptable explicitness ratings for downloaded posts. Characters stand for safe, questionable, and explicit, respectively.
 min_score             | Integer from -∞ to ∞            | Lowest acceptable score for downloaded posts. Posts with higher scores than this number will also be downloaded.
+min_favs | Integer from -∞ to ∞ | Lowest acceptable favorite count for downloaded posts. Anything above this is also downloaded.
 tags                  | Nearly Anything                 | Tags which will be used to perform the post search. See above for restrictions
 
 ## [Optional] Add blacklisted tags to the config file.
@@ -105,7 +121,7 @@ There is also a hard-coded secondary fallback if any lines are missing in the de
 ```
 days = 1
 ratings = s
-score = -9999999
+score = -INFINITY
 ```
 
 ## Normal Operation
@@ -113,35 +129,45 @@ score = -9999999
 Once you have added at least one group to the tags file, you should see something similar to this when you run **e621dl**:
 
 ```
-e621dl      INFO     Running e621dl version X.X.X.
+[i] Running e621dl version 4.5.2.
+[i] Checking for partial downloads...
+[✓] No partial downloads found
 
-e621dl      INFO     Checking for partial downloads.
-remote      INFO     Partial download found: id.ext.request. Finishing download.
+[i] Parsing user config...
+[i] Checking user blacklist...
+[✓] All blacklist tags have been checked (NUM/NUM)
 
-e621dl      INFO     Parsing config.
-remote      INFO     Tag aliased: bad_tag -> good_tag
+[i] Checking tags on 'SECTION'...
+[✓] All tags for SECTION have been checked (NUM/NUM)
 
-┌──────────────────────────────────────────────────────────────────────┐
-│                               Example                                │
-├────────────┬───────────┬─────────────────┬─────────────┬─────────────┤
-│ downloaded │ duplicate │ rating conflict │ blacklisted │ missing tag │
-├────────────┼───────────┼─────────────────┼─────────────┼─────────────┤
-│     X      │     X     │        X        │      X      │      X      │
-└────────────┴───────────┴─────────────────┴─────────────┴─────────────┘
+[i] Getting posts...
+
+[i] Beggining search 'SECTION'
+[i] Downloads are still in progress... so far X files have been parsed
+[✓] For search 'SECTION' a total of X files were parsed with X files downloaded. (X% Downloaded)
+
+[i] Grand Totals of run-time:
++ A Total of X files were parsed
++ X files were downloaded
++ X files were skipped.
+
+[i] Skipped file details:
++ X files were already downloaded
++ X files had an incorrect rating
++ X files were blacklisted
++ X files were missing requested tags
++ X files had a score lower than the threshhold
++ X files had a favorite count lower than the threshhold
 ```
 
-My intent was to make the column titles as easy to understand as possible, but here is briefly what each column represents.
+The runtime of e621dl is very self-explanatory, explaining each step as it continues and it even includes extra verbose logging for longer group checks `days = 2556`,`min_score = 0`,`tags = canine`.
 
-- The `new` column represents the number of posts that have matched all search group criteria, and have been downloaded during the current run.
-- The `duplicate` column represents the number of posts that have matched all search group criteria, but are already stored in your downloads folder from a previous run. They will not be downloaded.
-- The `rating conflict` column represents the number of posts that were found during the initial search, but do not match the explicitness rating for the search group. They will not be downloaded.
-- The `blacklisted` column represents the number of posts that were found during the initial search, but contain a blacklisted tag. They will not be downloaded.
-- The `missing tag` column represents the number of posts that were found during the initial search, but do not contain all tags for the search group. This is due to API limitations. They will not be downloaded.
+Yeah... this above one should net you [depending on ratings allowed] **literally all of e621** because unsuprisingly almost all furries are canines
 
 # Automation of **e621dl**
 
-It should be recognized that **e621dl**, as a script, can be scheduled to run as often as you like, keeping the your local collections always up-to-date, however, the methods for doing this are dependent on your platform, and are outside the scope of this quick-guide.
+It should be recognized that **e621dl**, as a script, can be scheduled to run as often as you like, keeping the your local collections always up-to-date, however, the methods for doing this are dependent on your platform, and are outside the scope of this quick-guide. Good luck though and happy parsing!
 
 # Feedback and Requests
 
-If you have any ideas on how to make this script run better, or for features you would like to see in the future, [open an issue](https://github.com/Wulfre/e621dl/issues) and I will try to read it as soon as possible.
+If you have any ideas on how to make this script run better, or for features you would like to see in the future, [open an issue](https://github.com/friskyfox/e621dl/issues) and I will try to read it as soon as possible.

@@ -62,8 +62,8 @@ def make_config(name='config.ini'):
     with open(name, 'wt', encoding = 'utf_8_sig') as outfile:
         outfile.write(constants.DEFAULT_CONFIG_TEXT)
         if name == 'config.ini':
-            print("[i] New default config file created. Please add tag groups to this file.'")
-            input("Press ENTER to continue...")
+            print("[i] New default config file created. Please add tag groups to this file.")
+            input("Press ENTER to exit...")
             raise SystemExit
 
 def migrate_config():
